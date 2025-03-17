@@ -1,5 +1,5 @@
 cms_repo: https://github.com/ioi/cms
-cms_version: master
+cms_version: c87fea7a6bc50d67325c4499a7a5540556803daf #v1.5
 
 # Which CMS services to deploy.
 services:

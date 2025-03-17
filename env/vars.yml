@@ -1,14 +1,15 @@
 ### Let's Encrypt ###
 
 use_letsencrypt: yes
-letsencrypt_service_admin_email: info@ioinformatics.org # TODO
+letsencrypt_service_admin_email: samuel.loza26@gmail.com # TODO
 
 
 ### CMS ###
 
-# cms_repo: https://github.com/ioi/cms.git
-# cms_version: master
+cms_repo: https://github.com/ioi/cms.git
+cms_version: c87fea7a6bc50d67325c4499a7a5540556803daf ## v1.5
 
+ansible_user: cms
 cms_db: cmsdb
 cms_db_user: cmsuser
 cms_db_pass: pass # TODO: random password
@@ -17,16 +18,16 @@ cms_db_host: "{{ groups['cms_db'][0] }}"
 cms_secret_key: 2bc11143e35c73f1b19ae273d1f731c9 # TODO: openssl rand -hex 16
 
 cms_contest_web_services_per_host: 2
-cms_contest_web_fqdn: cms.ioinformatics.org # TODO
+cms_contest_web_fqdn: camp.obi.org.bo # TODO
 
-cms_admin_web_fqdn: admin.ioinformatics.org # TODO
+cms_admin_web_fqdn: admin.camp.obi.org.bo # TODO
 cms_admin_web_auth_basic_user: ioi
 cms_admin_web_auth_basic_pass: pass # TODO
 
 cms_ranking_user: cmsuser
 cms_ranking_pass: pass # TODO: random password
 
-cms_ranking_fqdn: ranking.ioinformatics.org # TODO
+cms_ranking_fqdn: score.camp.obi.org.bo # TODO
 
 cms_worker_services_per_host: 1
 cms_worker_services_per_host_options:
@@ -35,22 +36,14 @@ cms_worker_services_per_host_options:
     memory_node: 0 # Worker locked to first NUMA node (CPU socket)
 
 cms_worker_host_slots: [
-  10.0.0.101,
-  10.0.0.102,
-  10.0.0.103,
-  10.0.0.104,
-  10.0.0.105,
-  10.0.0.106,
-  10.0.0.107,
-  10.0.0.108,
-  10.0.0.109,
+ 178.156.160.14,
 ]
 
 
 ### Isolate ###
 
 # isolate_repo: https://github.com/ioi/isolate.git
-# isolate_version: eb2607a4db78db285071c72d40bd438edf8921e1
+# isolate_version: 6f78ad42a181a2b9be78b005d55bcbe241cf268b
 
 isolate_optimizations:
   disable_swap: yes
