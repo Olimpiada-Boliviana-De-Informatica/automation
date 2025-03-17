@@ -1,0 +1,78 @@
+- name: Remove old SSH keys from known_hosts
+  hosts: localhost
+  tasks:
+    - name: Loop through all inventory hosts and remove known_hosts entries
+      ansible.builtin.shell: ssh-keygen -f "/home/sam/.ssh/known_hosts" -R "{{ item }}"
+      with_items: "{{ groups['all'] }}"
+
+- name: Create CMS user, grant sudo privileges, copy SSH key, and add PostgreSQL repo
+  hosts: all
+  become: yes
+  tasks:    
+    - name: Ensure the cms user exists
+      ansible.builtin.user:
+        name: cms
+        state: present
+        shell: /bin/bash
+        groups: sudo
+        append: yes
+
+    - name: Set password for cms user
+      ansible.builtin.command: echo "cms:cms_password" | chpasswd
+      ignore_errors: true
+
+    - name: Ensure sudo privileges for cms user
+      ansible.builtin.copy:
+        dest: /etc/sudoers.d/cms
+        content: |
+          cms ALL=(ALL) NOPASSWD:ALL
+        owner: root
+        group: root
+        mode: '0440'
+
+    - name: Verify cms user has sudo privileges
+      ansible.builtin.command: sudo -l -U cms
+
+    - name: Create .ssh directory for cms user
+      ansible.builtin.file:
+        path: /home/cms/.ssh
+        state: directory
+        owner: cms
+        group: cms
+        mode: '0700'
+
+    - name: Copy public SSH key to authorized_keys
+      ansible.builtin.copy:
+        src: /home/sam/.ssh/id_rsa.pub
+        dest: /home/cms/.ssh/authorized_keys
+        owner: cms
+        group: cms
+        mode: '0600'
+
+    - name: Verify SSH key permissions
+      ansible.builtin.command: ls -l /home/cms/.ssh
+      register: ssh_dir_contents
+
+    - name: Show contents of .ssh directory
+      debug:
+        var: ssh_dir_contents.stdout_lines
+    - name: Add PostgreSQL GPG key
+      ansible.builtin.shell: |
+        wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor -o /usr/share/keyrings/pgdg.gpg
+      args:
+        creates: /usr/share/keyrings/pgdg.gpg
+      register: gpg_key_result
+
+    - name: Show GPG key addition result
+      debug:
+        var: gpg_key_result.stdout_lines
+
+    - name: Add PostgreSQL repository
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/usr/share/keyrings/pgdg.gpg] http://apt.postgresql.org/pub/repos/apt {{ ansible_distribution_release }}-pgdg main"
+        state: present
+        filename: pgdg
+
+    - name: Update package list
+      ansible.builtin.apt:
+        update_cache: yes

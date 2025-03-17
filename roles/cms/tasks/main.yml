@@ -1,4 +1,4 @@
-- name: Add PPA for Python 3.8
+- name: Add PPA for Python 3.12
   include_tasks: add_python_ppa.yml
   tags: always
 
@@ -11,9 +11,9 @@
     - git
     - postgresql-client
     - libpq-dev
-    - python3.8
-    - python3.8-dev
-    - python3.8-venv
+    - python3.12
+    - python3.12-dev
+    - python3.12-venv
     - libyaml-dev
     - zip
     - libffi-dev
@@ -42,8 +42,8 @@
     - cgroup-lite
     - libcap-dev
     - g++-9
-    - python3.8
-    - python3.8-dev
+    - python3.12
+    - python3.12-dev
   tags: packages
   when: '"cms_worker" in services'
   notify: Restart CMS
@@ -181,16 +181,18 @@
   pip:
     requirements: /opt/cms/requirements.txt
     virtualenv: /opt/.venv
-    virtualenv_command: python3.8 -m venv
+    virtualenv_command: python3.12 -m venv
   when: cms_git_checkout_result.get('after', '<cms_git_checkout_skipped>') != (slurp_cms_installed_git_commit_result.get('content', '') | b64decode | trim)
   notify: Restart CMS
 
-- name: Install CMS
+- name: Install CMS using setup.py
   become: yes
   pip:
-    name: /opt/cms
+    chdir: /opt/cms
+    name: .
     virtualenv: /opt/.venv
-    virtualenv_command: python3.8 -m venv
+    virtualenv_command: python3.12 -m venv
+    extra_args: "--no-cache-dir --no-build-isolation"
   when: cms_git_checkout_result.get('after', '<cms_git_checkout_skipped>') != (slurp_cms_installed_git_commit_result.get('content', '') | b64decode | trim)
   notify: Restart CMS
 

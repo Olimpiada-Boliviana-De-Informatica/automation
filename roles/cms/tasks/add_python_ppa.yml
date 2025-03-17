@@ -6,7 +6,7 @@
   with_items:
     - software-properties-common
   tags: packages
-- name: add Python dead snakes repo for 3.8
+- name: add Python dead snakes repo for 3.12
   become: yes
   ansible.builtin.apt_repository:
     repo: 'ppa:deadsnakes/ppa'
