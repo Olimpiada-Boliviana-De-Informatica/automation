@@ -1,18 +1,10 @@
-# IOI Automation
+# OBI Automation
 
-This repository contains deployment setup for IOI, automated using Ansible playbooks.
+Este repositorio contiene scripts necesarios para levantar la infraestructura de OBI
 
-## 1. Fork this repository
+## 1. Requisitos
 
-Fork this repository for the deployment of your particular IOI.
+1. Servidor VPS (depende de la cantidad de concursantes)
+1. Llave ssh de cada VPS
+1. ansible instalado
 
-## 2. Provision host machines
-
-This setup is designed to work with any type of host running Ubuntu 20.04. However, it was developed and tested on Amazon Web Services (AWS) EC2.
-
-## 3. Deploy services
-
-- [CMS](cms/README.md)
-- [Translation app](translation/README.md)
-- [Matrix](matrix/README.md)
-- [GitLab](gitlab/README.md)
