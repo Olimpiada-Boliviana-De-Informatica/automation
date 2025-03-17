@@ -1,7 +1,0 @@
-- name: Restart app
-  become: yes
-  service:
-    name: translation.service
-    state: restarted
-    enabled: yes
-  tags: always

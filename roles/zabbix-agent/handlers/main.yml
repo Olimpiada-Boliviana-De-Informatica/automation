@@ -1,6 +1,0 @@
-- name: Restart Zabbix Agent
-  become: yes
-  service:
-    name: zabbix-agent
-    state: restarted
-  tags: always
