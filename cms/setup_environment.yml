@@ -17,10 +17,6 @@
         groups: sudo
         append: yes
 
-    - name: Set password for cms user
-      ansible.builtin.command: echo "cms:cms_password" | chpasswd
-      ignore_errors: true
-
     - name: Ensure sudo privileges for cms user
       ansible.builtin.copy:
         dest: /etc/sudoers.d/cms
@@ -56,22 +52,6 @@
     - name: Show contents of .ssh directory
       debug:
         var: ssh_dir_contents.stdout_lines
-    - name: Add PostgreSQL GPG key
-      ansible.builtin.shell: |
-        wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor -o /usr/share/keyrings/pgdg.gpg
-      args:
-        creates: /usr/share/keyrings/pgdg.gpg
-      register: gpg_key_result
-
-    - name: Show GPG key addition result
-      debug:
-        var: gpg_key_result.stdout_lines
-
-    - name: Add PostgreSQL repository
-      ansible.builtin.apt_repository:
-        repo: "deb [signed-by=/usr/share/keyrings/pgdg.gpg] http://apt.postgresql.org/pub/repos/apt {{ ansible_distribution_release }}-pgdg main"
-        state: present
-        filename: pgdg
 
     - name: Update package list
       ansible.builtin.apt:
