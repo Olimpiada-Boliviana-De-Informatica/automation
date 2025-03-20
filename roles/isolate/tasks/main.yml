@@ -1,12 +1,13 @@
 - name: Install Isolate prerequisite packages
   become: yes
   package:
-    name: "{{ item }}"
-    state: present
-  with_items:
-    - build-essential # Required to build some CMS Python dependencies
-    - cgroup-lite
-    - libcap-dev
+    name:
+      - build-essential # Required to build some CMS Python dependencies
+      - cgroup-lite
+      - libcap-dev
+      - pkg-config # Required to compile isolate
+      - libsystemd-dev # Required to compile isolate
+      - asciidoc # Required to compile isolate
   tags: packages
 
 - name: Ensure Isolate repo directory exists
@@ -14,7 +15,7 @@
   file:
     path: /opt/isolate
     owner: "{{ ansible_user }}"
-    mode: '0755'
+    mode: "0755"
     state: directory
 
 - name: Check out the Isolate repository
@@ -26,6 +27,7 @@
     depth: 1
 
 - name: Build Isolate
+  become: yes
   make:
     chdir: /opt/isolate
     target: isolate
@@ -36,7 +38,7 @@
     path: "{{ item }}"
     owner: root
     group: root
-    mode: '0755'
+    mode: "0755"
     state: directory
   with_items:
     - /var/local/lib
@@ -49,18 +51,14 @@
     path: /var/local/lib/isolate
     owner: root
     group: root
-    mode: '0755'
+    mode: "0755"
     state: directory
 
-- name: Install Isolate binary
+- name: Install Isolate
+  make:
+    chdir: /opt/isolate
+    target: install
   become: yes
-  copy:
-    src: /opt/isolate/isolate
-    dest: /usr/local/bin/isolate
-    remote_src: yes
-    owner: root
-    group: "{{ isolate_group }}"
-    mode: '04750' # setuid bit on, only owner and group can execute
 
 - name: Copy Isolate config
   become: yes
@@ -69,8 +67,33 @@
     dest: /usr/local/etc/isolate
     owner: root
     group: "{{ isolate_group }}"
-    mode: '0644'
+    mode: "0644"
   tags: config
 
 - name: Apply Isolate optimizations
   import_tasks: apply_optimizations.yml
+
+- name: Copy Isolate systemd service files
+  become: yes
+  copy:
+    src: /opt/isolate/systemd/
+    dest: /etc/systemd/system/
+    remote_src: yes
+    owner: root
+    group: root
+    mode: "0644"
+  tags: systemd
+
+- name: Reload systemd to recognize new services
+  become: yes
+  systemd:
+    daemon-reload: yes
+  tags: systemd
+
+- name: Start Isolate service
+  become: yes
+  systemd:
+    name: isolate.service
+    state: started
+    enabled: yes
+  tags: systemd

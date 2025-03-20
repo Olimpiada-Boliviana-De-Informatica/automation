@@ -1,5 +1,5 @@
 isolate_repo: https://github.com/ioi/isolate.git
-isolate_version: eb2607a4db78db285071c72d40bd438edf8921e1
+isolate_version: 758ab000e3a1bcf1e57ffddea2340ffa1a5af49b
 
 # User group that can execute the Isolate binary without root (using setuid).
 # WARNING: all users that can execute Isolate can practically run all binaries as root.

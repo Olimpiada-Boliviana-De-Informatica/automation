@@ -1,3 +1,7 @@
+- name: Add repository for PostgreSQL
+  include_tasks: add_postgres_repository.yml
+  tags: always
+
 - name: Install PostgreSQL
   become: yes
   package:
