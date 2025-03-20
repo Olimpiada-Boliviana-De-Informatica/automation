@@ -1,7 +1,3 @@
-- name: Add PPA for Python 3.12
-  include_tasks: add_python_ppa.yml
-  tags: always
-
 - name: Install CMS base prerequisite packages
   become: yes
   package:
