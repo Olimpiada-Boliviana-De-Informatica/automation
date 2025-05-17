@@ -37,7 +37,7 @@
   with_items:
     - cgroup-lite
     - libcap-dev
-    - g++-9
+    - g++
     - python3.12
     - python3.12-dev
   tags: packages

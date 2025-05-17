@@ -1,4 +1,37 @@
-- name: Remove old SSH keys from known_hosts
+- name: Instalar GnuPG y locales
+  hosts: all
+  become: true
+  tasks:
+    - name: Update packages
+      ansible.builtin.apt:
+        update_cache: yes
+
+    - name: Install gnupg
+      ansible.builtin.apt:
+        name: gnupg
+        state: present
+
+- name: Configure locate
+  hosts: all
+  become: true
+  tasks:
+    - name: Install locate
+      ansible.builtin.apt:
+        name: locales
+        state: present
+        update_cache: yes
+
+    - name: locale en_US.UTF-8
+      ansible.builtin.command: locale-gen en_US.UTF-8
+
+    - name: locate en_US.UTF-8
+      ansible.builtin.lineinfile:
+        path: /etc/default/locale
+        line: 'LANG="en_US.UTF-8"'
+        create: yes
+
+
+- name: localhost
   hosts: localhost
   tasks:
     - name: Loop through all inventory hosts and remove known_hosts entries
@@ -8,7 +41,7 @@
 - name: Create CMS user, grant sudo privileges, copy SSH key, and add PostgreSQL repo
   hosts: all
   become: yes
-  tasks:    
+  tasks:
     - name: Ensure the cms user exists
       ansible.builtin.user:
         name: cms
