@@ -1,99 +1,118 @@
-- name: Install Isolate prerequisite packages
+- name: Run prerequisites.py
   become: yes
-  package:
-    name:
-      - build-essential # Required to build some CMS Python dependencies
-      - cgroup-lite
-      - libcap-dev
-      - pkg-config # Required to compile isolate
-      - libsystemd-dev # Required to compile isolate
-      - asciidoc # Required to compile isolate
-  tags: packages
+  ansible.builtin.shell: python3 prerequisites.py -y --no-conf install
+  args:
+    chdir: /opt/cms
+  register: prereq_result
 
-- name: Ensure Isolate repo directory exists
-  become: yes
-  file:
-    path: /opt/isolate
-    owner: "{{ ansible_user }}"
-    mode: "0755"
-    state: directory
+- name: Show prerequisites.py output (stdout)
+  ansible.builtin.debug:
+    var: prereq_result.stdout
 
-- name: Check out the Isolate repository
-  git:
-    repo: "{{ isolate_repo }}"
-    version: "{{ isolate_version }}"
-    dest: /opt/isolate
-    accept_hostkey: yes
-    depth: 1
+- name: Show prerequisites.py errors (stderr)
+  ansible.builtin.debug:
+    var: prereq_result.stderr
 
-- name: Build Isolate
-  become: yes
-  make:
-    chdir: /opt/isolate
-    target: isolate
-
-- name: Ensure Isolate parent directories exist
-  become: yes
-  file:
-    path: "{{ item }}"
-    owner: root
-    group: root
-    mode: "0755"
-    state: directory
-  with_items:
-    - /var/local/lib
-    - /usr/local/bin
-    - /usr/local/etc
-
-- name: Ensure Isolate box root directory exists
-  become: yes
-  file:
-    path: /var/local/lib/isolate
-    owner: root
-    group: root
-    mode: "0755"
-    state: directory
-
-- name: Install Isolate
-  make:
-    chdir: /opt/isolate
-    target: install
-  become: yes
-
-- name: Copy Isolate config
-  become: yes
-  template:
-    src: isolate.j2
-    dest: /usr/local/etc/isolate
-    owner: root
-    group: "{{ isolate_group }}"
-    mode: "0644"
-  tags: config
-
-- name: Apply Isolate optimizations
-  import_tasks: apply_optimizations.yml
-
-- name: Copy Isolate systemd service files
-  become: yes
-  copy:
-    src: /opt/isolate/systemd/
-    dest: /etc/systemd/system/
-    remote_src: yes
-    owner: root
-    group: root
-    mode: "0644"
-  tags: systemd
-
-- name: Reload systemd to recognize new services
-  become: yes
-  systemd:
-    daemon-reload: yes
-  tags: systemd
-
-- name: Start Isolate service
-  become: yes
-  systemd:
-    name: isolate.service
-    state: started
-    enabled: yes
-  tags: systemd
+- name: Print cmsuser group memberships
+  ansible.builtin.debug:
+    var: user_groups.stdout
+#- name: Install Isolate prerequisite packages
+#  become: yes
+#  package:
+#    name:
+#      - build-essential # Required to build some CMS Python dependencies
+#      - cgroup-lite
+#      - libcap-dev
+#      - pkg-config # Required to compile isolate
+#      - libsystemd-dev # Required to compile isolate
+#      - asciidoc # Required to compile isolate
+#  tags: packages
+#
+#- name: Ensure Isolate repo directory exists
+#  become: yes
+#  file:
+#    path: /opt/isolate
+#    owner: "{{ ansible_user }}"
+#    mode: "0755"
+#    state: directory
+#
+#- name: Check out the Isolate repository
+#  git:
+#    repo: "{{ isolate_repo }}"
+#    version: "{{ isolate_version }}"
+#    dest: /opt/isolate
+#    accept_hostkey: yes
+#    depth: 1
+#
+#- name: Build Isolate
+#  become: yes
+#  make:
+#    chdir: /opt/isolate
+#    target: isolate
+#
+#- name: Ensure Isolate parent directories exist
+#  become: yes
+#  file:
+#    path: "{{ item }}"
+#    owner: root
+#    group: root
+#    mode: "0755"
+#    state: directory
+#  with_items:
+#    - /var/local/lib
+#    - /usr/local/bin
+#    - /usr/local/etc
+#
+#- name: Ensure Isolate box root directory exists
+#  become: yes
+#  file:
+#    path: /var/local/lib/isolate
+#    owner: root
+#    group: root
+#    mode: "0755"
+#    state: directory
+#
+#- name: Install Isolate
+#  make:
+#    chdir: /opt/isolate
+#    target: install
+#  become: yes
+#
+#- name: Copy Isolate config
+#  become: yes
+#  template:
+#    src: isolate.j2
+#    dest: /usr/local/etc/isolate
+#    owner: root
+#    group: "{{ isolate_group }}"
+#    mode: "0644"
+#  tags: config
+#
+#- name: Apply Isolate optimizations
+#  import_tasks: apply_optimizations.yml
+#
+#- name: Copy Isolate systemd service files
+#  become: yes
+#  copy:
+#    src: /opt/isolate/systemd/
+#    dest: /etc/systemd/system/
+#    remote_src: yes
+#    owner: root
+#    group: root
+#    mode: "0644"
+#  tags: systemd
+#
+#- name: Reload systemd to recognize new services
+#  become: yes
+#  systemd:
+#    daemon-reload: yes
+#  tags: systemd
+#
+#- name: Start Isolate service
+#  become: yes
+#  systemd:
+#    name: isolate.service
+#    state: started
+#    enabled: yes
+#  tags: systemd
+#
