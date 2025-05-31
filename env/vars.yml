@@ -18,26 +18,26 @@ cms_db_host: "{{ groups['cms_db'][0] }}"
 cms_secret_key: 2bc11143e35c73f1b19ae273d1f731c9 # TODO: openssl rand -hex 16
 
 cms_contest_web_services_per_host: 1
-cms_contest_web_fqdn: nivel2.obi.org.bo # TODO
+cms_contest_web_fqdn: ada.ofbi.net # TODO
 
-cms_admin_web_fqdn: admin.nivel2.obi.org.bo # TODO
-cms_admin_web_auth_basic_user: ioi
-cms_admin_web_auth_basic_pass: pass # TODO
+cms_admin_web_fqdn: admin.ada.ofbi.net # TODO
+cms_admin_web_auth_basic_user:
+cms_admin_web_auth_basic_pass: # TODO
 
-cms_ranking_user: cmsuser
+cms_ranking_user: ada
 cms_ranking_pass: pass # TODO: random password
 
-cms_ranking_fqdn: score.nivel2.obi.org.bo # TODO
+cms_ranking_fqdn: score.ada.ofbi.net # TODO
 
-cms_worker_services_per_host: 3
+cms_worker_services_per_host: 2
 cms_worker_services_per_host_options:
   # Example for c4.xlarge - 2 physical CPU cores
   - cpu_cores: '1' # Worker locked to second CPU core
     memory_node: 0 # Worker locked to first NUMA node (CPU socket)
 
 cms_worker_host_slots: [
- 34.169.155.34,
- 34.105.60.27
+  34.10.77.17,
+  34.10.77.17
 ]
 
 

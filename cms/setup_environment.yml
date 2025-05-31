@@ -1,50 +1,32 @@
-- name: Instalar GnuPG y locales
-  hosts: all
-  become: true
+- name: Install Isolate prerequisite packages
+  hosts: cms_worker
+  become: yes
+  gather_facts: no
   tasks:
-    - name: Update packages
-      ansible.builtin.apt:
-        update_cache: yes
-
-    - name: Install gnupg
-      ansible.builtin.apt:
-        name: gnupg
+    - name: Install required packages individually
+      package:
+        name: "{{ item }}"
         state: present
+      loop:
+        - build-essential
+        - pkg-config
+        - libsystemd-dev
+      tags: packages
 
-- name: Configure locate
-  hosts: all
-  become: true
-  tasks:
-    - name: Install locate
-      ansible.builtin.apt:
-        name: locales
-        state: present
-        update_cache: yes
-
-    - name: locale en_US.UTF-8
-      ansible.builtin.command: locale-gen en_US.UTF-8
-
-    - name: locate en_US.UTF-8
-      ansible.builtin.lineinfile:
-        path: /etc/default/locale
-        line: 'LANG="en_US.UTF-8"'
-        create: yes
-
-
-- name: localhost
+- name: Remove known_hosts entries for all inventory hosts
   hosts: localhost
   tasks:
     - name: Loop through all inventory hosts and remove known_hosts entries
       ansible.builtin.shell: ssh-keygen -f "/home/sam/.ssh/known_hosts" -R "{{ item }}"
       with_items: "{{ groups['all'] }}"
 
-- name: Create CMS user, grant sudo privileges, copy SSH key, and add PostgreSQL repo
+- name: Create CMS user, grant sudo privileges
   hosts: all
   become: yes
   tasks:
     - name: Ensure the cms user exists
       ansible.builtin.user:
-        name: cms
+        name: cmsuser
         state: present
         shell: /bin/bash
         groups: sudo
@@ -52,34 +34,34 @@
 
     - name: Ensure sudo privileges for cms user
       ansible.builtin.copy:
-        dest: /etc/sudoers.d/cms
+        dest: /etc/sudoers.d/cmsuser
         content: |
-          cms ALL=(ALL) NOPASSWD:ALL
+          cmsuser ALL=(ALL) NOPASSWD:ALL
         owner: root
         group: root
         mode: '0440'
 
     - name: Verify cms user has sudo privileges
-      ansible.builtin.command: sudo -l -U cms
+      ansible.builtin.command: sudo -l -U cmsuser
 
     - name: Create .ssh directory for cms user
       ansible.builtin.file:
-        path: /home/cms/.ssh
+        path: /home/cmsuser/.ssh
         state: directory
-        owner: cms
-        group: cms
+        owner: cmsuser
+        group: cmsuser
         mode: '0700'
 
     - name: Copy public SSH key to authorized_keys
       ansible.builtin.copy:
         src: /home/sam/.ssh/id_rsa.pub
-        dest: /home/cms/.ssh/authorized_keys
-        owner: cms
-        group: cms
+        dest: /home/cmsuser/.ssh/authorized_keys
+        owner: cmsuser
+        group: cmsuser
         mode: '0600'
 
     - name: Verify SSH key permissions
-      ansible.builtin.command: ls -l /home/cms/.ssh
+      ansible.builtin.command: ls -l /home/cmsuser/.ssh
       register: ssh_dir_contents
 
     - name: Show contents of .ssh directory
