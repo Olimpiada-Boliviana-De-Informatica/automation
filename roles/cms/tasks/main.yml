@@ -1,9 +1,10 @@
 - name: Install CMS base prerequisite packages
   become: yes
-  package:
+  apt:
     name: "{{ item }}"
     state: present
-  with_items:
+    update_cache: yes
+  loop:
     - git
     - postgresql-client
     - libpq-dev
@@ -12,9 +13,10 @@
     - python3.12-venv
     - libyaml-dev
     - zip
+    - shared-mime-info
     - libffi-dev
-    - build-essential # Required to build some CMS Python dependencies
-    - libcups2-dev # Required by pycups CMS Python dependency
+    - build-essential
+    - libcups2-dev
   tags: packages
   notify: Restart CMS
 
@@ -29,17 +31,25 @@
   when: '"cms_contest_web" in services'
   notify: Restart CMS
 
-- name: Install CMS worker service prerequisite packages
+- name: Install CMS worker required packages
   become: yes
-  package:
+  apt:
     name: "{{ item }}"
     state: present
-  with_items:
-    - cgroup-lite
-    - libcap-dev
+    update_cache: yes
+  loop:
+    - build-essential
     - g++
+    - libcap-dev
     - python3.12
     - python3.12-dev
+    - python3.12-venv
+    - zip
+    - libpq-dev
+    - libcups2-dev
+    - libyaml-dev
+    - libffi-dev
+    - python3-pip
   tags: packages
   when: '"cms_worker" in services'
   notify: Restart CMS
@@ -51,16 +61,14 @@
     system: yes
   notify: Restart CMS
 
-- name: Create CMS user
+- name: Create cmsuser user
   become: yes
   user:
     name: cmsuser
-    group: cmsuser
-    comment: CMS default user
-    create_home: no
-    shell: /bin/false
-    system: yes
-  notify: Restart CMS
+    shell: /bin/bash
+    groups: [sudo, isolate]
+    append: yes
+    create_home: yes
 
 - name: Create CMS ranking user
   become: yes
@@ -90,8 +98,17 @@
     path: /opt/cms
     owner: cmsuser
     group: cmsuser
-    mode: '0775'
+    mode: "0775"
     follow: yes
+    state: directory
+
+- name: Ensure CMS installation directory exists
+  become: yes
+  file:
+    path: /home/cmsuser/cms
+    owner: cmsuser
+    group: cmsuser
+    mode: "0755"
     state: directory
 
 - name: Ensure CMS parent directories exist
@@ -100,7 +117,7 @@
     path: "{{ item }}"
     owner: root
     group: root
-    mode: '0755'
+    mode: "0755"
     follow: no
     state: directory
   with_items:
@@ -117,7 +134,7 @@
     path: "{{ item }}"
     owner: cmsuser
     group: cmsuser
-    mode: '0770'
+    mode: "0770"
     follow: yes
     state: directory
   with_items:
@@ -132,7 +149,7 @@
     path: "{{ item }}"
     owner: cmsuser
     group: cmsuser
-    mode: '0775'
+    mode: "0775"
     follow: yes
     state: directory
   with_items:
@@ -145,7 +162,7 @@
     path: "{{ item }}"
     owner: cmsrankinguser
     group: cmsrankinguser
-    mode: '0755'
+    mode: "0755"
     follow: yes
     state: directory
   with_items:
@@ -164,31 +181,32 @@
     depth: 1
   register: cms_git_checkout_result
 
-- name: Read cms_installed_git_commit file
-  slurp:
-    src: /opt/cms_installed_git_commit
-  ignore_errors: yes
+- name: Check whether the CMS install commit marker exists
+  stat:
+    path: /opt/cms_installed_git_commit
   changed_when: no
   check_mode: no # Run even when Ansible is run in check mode
+  register: cms_installed_git_commit_file
+
+- name: Read CMS install commit marker
+  slurp:
+    src: /opt/cms_installed_git_commit
+  changed_when: no
+  check_mode: no # Run even when Ansible is run in check mode
+  when: cms_installed_git_commit_file.stat.exists
   register: slurp_cms_installed_git_commit_result
 
-- name: Install CMS Python requirements
+- name: Install CMS using its supported installer
   become: yes
-  pip:
-    requirements: /opt/cms/requirements.txt
-    virtualenv: /opt/.venv
-    virtualenv_command: python3.12 -m venv
-  when: cms_git_checkout_result.get('after', '<cms_git_checkout_skipped>') != (slurp_cms_installed_git_commit_result.get('content', '') | b64decode | trim)
-  notify: Restart CMS
-
-- name: Install CMS using setup.py
-  become: yes
-  pip:
+  become_user: cmsuser
+  command:
+    argv:
+      - /opt/cms/install.py
+      - --dir=/home/cmsuser/cms
+      - --skip-isolate
+      - cms
+  args:
     chdir: /opt/cms
-    name: .
-    virtualenv: /opt/.venv
-    virtualenv_command: python3.12 -m venv
-    extra_args: "--no-cache-dir --no-build-isolation"
   when: cms_git_checkout_result.get('after', '<cms_git_checkout_skipped>') != (slurp_cms_installed_git_commit_result.get('content', '') | b64decode | trim)
   notify: Restart CMS
 
@@ -198,7 +216,7 @@
     src: cms_installed_git_commit.j2
     dest: /opt/cms_installed_git_commit
     owner: cmsuser
-    mode: '0664'
+    mode: "0664"
 
 - name: Copy Polygon testlib
   become: yes

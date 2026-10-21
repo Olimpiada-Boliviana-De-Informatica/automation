@@ -72,7 +72,7 @@
 
     - name: Copy public SSH key to authorized_keys
       ansible.builtin.copy:
-        src: /home/sam/.ssh/id_rsa.pub
+        src: "{{ controller_ssh_public_key | mandatory }}"
         dest: /home/cms/.ssh/authorized_keys
         owner: cms
         group: cms

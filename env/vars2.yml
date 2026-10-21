@@ -1,0 +1,37 @@
+### Let's Encrypt ###
+
+use_letsencrypt: no
+letsencrypt_service_admin_email: samuel.loza26@gmail.com # TODO
+
+
+### CMS ###
+
+cms_repo: https://github.com/cms-dev/cms.git
+cms_version: main
+
+ansible_user: ansible
+cms_db: cmsdb
+cms_db_user: cmsuser
+cms_db_pass: "{{ lookup('ansible.builtin.env', 'CMS_DB_PASS') | mandatory }}"
+cms_db_host: "{{ groups['cms_db'][0] }}"
+
+cms_secret_key: "{{ lookup('ansible.builtin.env', 'CMS_SECRET_KEY') | mandatory }}"
+
+cms_contest_web_services_per_host: 1
+cms_contest_web_fqdn: ada.ofbi.net # TODO
+
+cms_admin_web_fqdn: admin.ada.ofbi.net # TODO
+cms_admin_web_auth_basic_user:
+cms_admin_web_auth_basic_pass: "{{ lookup('ansible.builtin.env', 'CMS_ADMIN_WEB_AUTH_BASIC_PASS') | mandatory }}"
+
+cms_ranking_user: ada
+cms_ranking_pass: "{{ lookup('ansible.builtin.env', 'CMS_RANKING_PASS') | mandatory }}"
+
+cms_ranking_fqdn: score.ada.ofbi.net # TODO
+
+cms_worker_services_per_host: 2
+cms_worker_host_slots: [
+  10.0.20.10,
+  10.0.20.11,
+  10.0.20.12
+]

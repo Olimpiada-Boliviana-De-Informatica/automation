@@ -51,6 +51,31 @@
     state: present
   tags: packages
 
+- name: Check which domains already have a Let's Encrypt certificate
+  become: yes
+  stat:
+    path: /etc/letsencrypt/live/{{ item.fqdn }}/cert.pem
+  loop: "{{ domains }}"
+  loop_control:
+    label: "{{ item.fqdn }}"
+  check_mode: no
+  register: domain_certificates
+  when: use_letsencrypt
+  tags: always
+
+# An enabled HTTPS site whose cert is missing makes every Nginx reload fail,
+# including the one Certbot needs; configure_domain.yml re-enables it afterwards.
+- name: Disable domain configs whose certificate does not exist yet
+  become: yes
+  file:
+    path: /etc/nginx/sites-enabled/{{ item.item.name }}
+    state: absent
+  loop: "{{ domain_certificates.results }}"
+  loop_control:
+    label: "{{ item.item.name }}"
+  when: use_letsencrypt and not item.stat.exists
+  tags: always
+
 - name: Configure domains
   include_tasks: configure_domain.yml
   loop: "{{ domains }}"

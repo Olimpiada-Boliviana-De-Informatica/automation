@@ -1,0 +1,17 @@
+# Listening address for RankingWebServer. By default only
+# listens on localhost, meaning you need a separate reverse proxy
+# to access it from the web. Set to empty string to allow
+# connecting from anywhere.
+bind_address = "{{ ansible_host }}"
+
+
+# Listening port for RankingWebServer.
+http_port = 8890
+
+# Login information for adding and editing data.
+username = "{{ cms_ranking_user }}"
+password = "{{ cms_ranking_pass }}"
+
+# The ranking service runs as cmsrankinguser, unlike the main CMS services.
+log_dir = "/var/local/log/cms/ranking"
+lib_dir = "/var/local/lib/cms/ranking"

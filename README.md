@@ -12,7 +12,7 @@ Este repositorio contiene scripts necesarios para levantar la infraestructura de
 
 ### 1. Aprovisionar usuarios SSH e instalar PostgreSQL
 ```bash
-ansible-playbook -i env/hosts.ini cms/setup_environment.yml
+ansible-playbook -i env/hosts.ini -e controller_ssh_public_key="$HOME/.ssh/id_rsa.pub" cms/setup_environment.yml
 ```
 
 ### 2. Instalación del CMS

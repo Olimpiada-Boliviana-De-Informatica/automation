@@ -1,6 +1,10 @@
 # CMS
 
-This playbook deploys [ioi/cms](https://github.com/ioi/cms).
+This playbook deploys [cms-dev/cms](https://github.com/cms-dev/cms).
+
+It follows the CMS `main` branch and uses its installer and TOML configuration
+format, installing CMS under `/home/cmsuser/cms`. The branch can change over
+time; review upgrades before deploying to a production contest.
 
 ## Service <-> Instance Mapping
 
@@ -18,11 +22,17 @@ This playbook deploys [ioi/cms](https://github.com/ioi/cms).
 
 1. Provision VMs as specified in the mapping table above, updating `env/hosts.ini` accordingly.
 1. Fill the CMS configs in `env/vars.yml`. Several notes:
+   - Export `CMS_DB_PASS`, `CMS_SECRET_KEY`, `CMS_ADMIN_WEB_AUTH_BASIC_PASS`, and
+     `CMS_RANKING_PASS` before deploying. Do not commit their values.
    - `cms_worker_host_slots`: the number of (static) IPs should be equal to the maximum number of workers you want to deploy during a contest. See also "Worker management" section below.
 
 1. Deploy:
 
        ansible-playbook -i env/hosts.ini -e @env/vars.yml cms/deploy.yml
+
+   On an existing installation, follow the upstream export/drop/init/import
+   migration procedure before changing `cms_version`; this playbook only
+   initializes an empty database and never drops contest data.
 
 1. Verify that the following services can be accessed:
    - Contest web service (`https://cms.[domain]`)
@@ -90,7 +100,7 @@ ansible-playbook -i env/hosts.ini -e @env/vars.yml -e contest_id=<ID> cms/add_pa
 
 ## Adding statements to tasks
 
-1. Rsync files from Translation app's `/opt/translation/final_pdf/` to `env/data/final_pdf/`.
+1. Copy the statement PDF files to `env/data/final_pdf/`.
 1. (IMPORTANT) For each task, check for possibly multiple files for a language! This could happen when there was a race condition in saving the versions. In such cases, take the latest one and remove the duplicates. It could be the case that the latest one has some hash appended to the filename -- please remove it.
 1. Run:
 

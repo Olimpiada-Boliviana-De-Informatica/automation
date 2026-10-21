@@ -1,0 +1,57 @@
+[global]
+temp_dir = "/tmp"
+backdoor = false
+
+[services]
+LogService = [{% for host in groups['cms_log'] %}["{{ host }}", 29000]{% if not loop.last %}, {% endif %}{% endfor %}]
+ResourceService = [{% for host in groups['cms'] %}["{{ host }}", 28000]{% if not loop.last %}, {% endif %}{% endfor %}]
+ScoringService = [{% for host in groups['cms_scoring'] %}["{{ host }}", 28500]{% if not loop.last %}, {% endif %}{% endfor %}]
+Checker = [{% for host in groups['cms_checker'] %}["{{ host }}", 22000]{% if not loop.last %}, {% endif %}{% endfor %}]
+EvaluationService = [{% for host in groups['cms_evaluation'] %}["{{ host }}", 25000]{% if not loop.last %}, {% endif %}{% endfor %}]
+Worker = [{% for worker in (cms_worker_host_slots | default([])) | product(range(cms_worker_services_per_host)) %}["{{ worker[0] }}", {{ worker[1] + 26000 }}]{% if not loop.last %}, {% endif %}{% endfor %}]
+ContestWebServer = [{% for web in groups['cms_contest_web'] | product(range(cms_contest_web_services_per_host)) %}["{{ web[0] }}", {{ web[1] + 21000 }}]{% if not loop.last %}, {% endif %}{% endfor %}]
+AdminWebServer = [{% for host in groups['cms_admin_web'] %}["{{ host }}", 21999]{% if not loop.last %}, {% endif %}{% endfor %}]
+ProxyService = [{% for host in groups['cms_proxy'] %}["{{ host }}", 28600]{% if not loop.last %}, {% endif %}{% endfor %}]
+PrometheusExporter = []
+TelegramBot = []
+
+[database]
+url = "postgresql+psycopg2://{{ cms_db_user }}:{{ cms_db_pass | urlencode }}@{{ cms_db_host }}:5432/{{ cms_db }}"
+debug = false
+twophase_commit = false
+
+[worker]
+keep_sandbox = false
+
+[sandbox]
+max_file_size = 1_048_576
+
+[web_server]
+secret_key = "{{ cms_secret_key }}"
+tornado_debug = false
+
+[contest_web_server]
+listen_address = [{% for web in groups['cms_contest_web'] | product(range(cms_contest_web_services_per_host)) %}"{{ web[0] }}"{% if not loop.last %}, {% endif %}{% endfor %}]
+listen_port = [{% for web in groups['cms_contest_web'] | product(range(cms_contest_web_services_per_host)) %}{{ web[1] + 8001 }}{% if not loop.last %}, {% endif %}{% endfor %}]
+cookie_duration = 10800
+num_proxies_used = 1
+submit_local_copy = true
+submit_local_copy_path = "%s/submissions/"
+tests_local_copy = true
+tests_local_copy_path = "%s/tests/"
+max_submission_length = 100_000
+max_input_length = 5_000_000
+docs_path = "/usr/share/cms/docs"
+
+[admin_web_server]
+listen_address = "{{ groups['cms_admin_web'][0] }}"
+listen_port = 8000
+cookie_duration = 36000
+num_proxies_used = 1
+
+[proxy_service]
+rankings = [{% for host in groups['cms_ranking'] %}"http://{{ cms_ranking_user }}:{{ cms_ranking_pass }}@{{ host }}:8890/"{% if not loop.last %}, {% endif %}{% endfor %}]
+
+[prometheus]
+listen_address = "127.0.0.1"
+listen_port = 8811

@@ -59,6 +59,12 @@
             auth_basic_user: "{{ cms_ranking_auth_basic_user | default('') }}"
             auth_basic_pass: "{{ cms_ranking_auth_basic_pass | default('') }}"
 
+- hosts: cms_worker
+  gather_facts: no
+  roles:
+    - role: isolate
+      tags: always
+
 - hosts: cms
   gather_facts: no
   roles:
@@ -67,21 +73,3 @@
         services: "{{ group_names }}"
         run_db_migration: "{{ inventory_hostname in groups['cms_admin_web'] and groups['cms_admin_web'].index(inventory_hostname) == 0 }}" # Only run DB migration when executing in the first cms_admin_web instance.
         additional_cms_users: "{{ [ansible_user] }}"
-
-- hosts: cms_worker
-  gather_facts: no
-  tasks:
-    - name: Generate isolate_cpusets config
-      set_fact:
-        isolate_cpusets: "{{ (isolate_cpusets | default([])) + [ worker[1] | combine({'box_ids': range(10 + i*10, 20 + i*10) | list}) ] }}"
-      loop: "{{ range((cms_worker_host_slots | default([])) | length) | product(cms_worker_services_per_host_options) | list }}"
-      loop_control:
-        index_var: i
-        loop_var: worker # First element is the worker host index, second element is a list of cpuset config entries for the worker host.
-
-    - name: Set up Isolate
-      include_role:
-        name: isolate
-      vars:
-        isolate_group: cmsuser
-      tags: always
